@@ -22,6 +22,8 @@ public class MainActivity extends Activity {
 
     private static final String LOG_TAG = MainActivity.class.getSimpleName();
 
+    public static boolean safeToTakePicture = false;
+
     private Camera mCamera;
     private CameraPreview mPreview;
 
@@ -31,6 +33,7 @@ public class MainActivity extends Activity {
         public void onPictureTaken(byte[] data, Camera camera) {
 
             File pictureFile = getOutputMediaFile(MEDIA_TYPE_IMAGE);
+            mCamera.startPreview();
             if (pictureFile == null){
                 Log.d(LOG_TAG, "Error creating media file, check storage permissions: ");
                 return;
@@ -45,6 +48,8 @@ public class MainActivity extends Activity {
             } catch (IOException e) {
                 Log.d(LOG_TAG, "Error accessing file: " + e.getMessage());
             }
+            //finished saving picture
+            safeToTakePicture = true;
         }
     };
 
@@ -61,13 +66,14 @@ public class MainActivity extends Activity {
         preview.addView(mPreview);
 
         // Add a listener to the Capture button
-        Button captureButton = (Button) findViewById(R.id.button_capture);
+        final Button captureButton = (Button) findViewById(R.id.button_capture);
         captureButton.setOnClickListener(
                 new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         // get an image from the camera
                         mCamera.takePicture(null, null, mPicture);
+                        safeToTakePicture = false;
                     }
                 }
         );
@@ -87,10 +93,21 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
+        super.onPause();
         if (mCamera != null){
             mCamera.release();        // release the camera for other applications
             mCamera = null;
         }
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
     }
 
     public static final int MEDIA_TYPE_IMAGE = 1;
